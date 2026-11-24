@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "Niobium",
+  "version": "0.2.0",
+  "description": "A Firefox-powered browsing companion with download controls and an optional local Tor SOCKS5 proxy.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "niobium-browser@mahim11184",
+      "strict_min_version": "109.0"
+    }
+  },
+  "permissions": [
+    "downloads",
+    "storage",
+    "proxy"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_title": "Niobium",
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  }
+}
