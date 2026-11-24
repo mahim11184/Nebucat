@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Niobium</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><img src="icons/icon.svg" alt=""><div><strong>Niobium</strong><small>Firefox edition · 0.2</small></div></div>
+    <span class="engine">GECKO</span>
+  </header>
+
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab active" data-tab="downloads">Downloads</button>
+    <button class="tab" data-tab="privacy">Tor connection</button>
+  </nav>
+
+  <main>
+    <section id="downloads" class="panel active">
+      <form id="download-form" class="add-form">
+        <input id="download-url" type="url" placeholder="Paste a download URL…" aria-label="Download URL" required>
+        <button class="primary" type="submit">Add</button>
+      </form>
+      <div class="toolbar">
+        <input id="filter" type="search" placeholder="Filter downloads…" aria-label="Filter downloads">
+        <button id="refresh" class="icon-button" title="Refresh downloads" aria-label="Refresh">↻</button>
+      </div>
+      <div class="summary"><span id="download-count">0 downloads</span><span id="active-count">0 active</span></div>
+      <div id="download-list" class="download-list"><div class="empty">Your downloads will appear here.</div></div>
+    </section>
+
+    <section id="privacy" class="panel">
+      <div class="tor-card">
+        <div class="tor-heading"><span class="onion">◉</span><div><h2>Tor proxy</h2><p>Route Firefox traffic through a local Tor service.</p></div></div>
+        <div class="status-row"><span id="tor-dot" class="dot"></span><strong id="tor-status">Tor mode is off</strong></div>
+        <button id="tor-toggle" class="primary wide">Enable Tor proxy</button>
+        <div class="endpoint">
+          <label for="tor-host">SOCKS5 host</label>
+          <input id="tor-host" value="127.0.0.1" autocomplete="off">
+          <label for="tor-port">SOCKS5 port</label>
+          <input id="tor-port" type="number" min="1" max="65535" value="9050">
+          <button id="save-endpoint" class="secondary wide">Save proxy address</button>
+        </div>
+        <p class="notice">Requires Tor to be installed and running separately. This add-on does not contain Tor. Enabling the proxy is not proof that Tor is reachable or that you are anonymous.</p>
+        <a href="https://check.torproject.org/" target="_blank" rel="noreferrer">Open Tor connection check ↗</a>
+      </div>
+    </section>
+  </main>
+  <footer>Private by design. Your downloads stay in Firefox.</footer>
+  <script src="popup.js"></script>
+</body>
+</html>
