@@ -262,10 +262,10 @@ public class MainActivity extends Activity {
             Uri savedUri = null;
             try {
                 ContentValues values = new ContentValues();
-                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-                values.put(MediaStore.Downloads.MIME_TYPE, mime);
-                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Niobium");
-                values.put(MediaStore.Downloads.IS_PENDING, 1);
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Niobium");
+                values.put(MediaStore.MediaColumns.IS_PENDING, 1);
 
                 savedUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                 if (savedUri == null) throw new IllegalStateException("Android could not create the download file.");
@@ -280,7 +280,7 @@ public class MainActivity extends Activity {
                 }
 
                 ContentValues complete = new ContentValues();
-                complete.put(MediaStore.Downloads.IS_PENDING, 0);
+                complete.put(MediaStore.MediaColumns.IS_PENDING, 0);
                 getContentResolver().update(savedUri, complete, null, null);
                 runOnUiThread(() -> Toast.makeText(this, "Saved to Downloads/Niobium", Toast.LENGTH_LONG).show());
             } catch (Exception error) {
@@ -332,11 +332,11 @@ public class MainActivity extends Activity {
         List<Uri> uris = new ArrayList<>();
         List<String> labels = new ArrayList<>();
         String[] projection = {
-                MediaStore.Downloads._ID,
-                MediaStore.Downloads.DISPLAY_NAME,
-                MediaStore.Downloads.SIZE
+                MediaStore.MediaColumns._ID,
+                MediaStore.MediaColumns.DISPLAY_NAME,
+                MediaStore.MediaColumns.SIZE
         };
-        String selection = MediaStore.Downloads.RELATIVE_PATH + "=?";
+        String selection = MediaStore.MediaColumns.RELATIVE_PATH + "=?";
         String[] selectionArgs = {Environment.DIRECTORY_DOWNLOADS + "/Niobium/"};
 
         try (Cursor cursor = getContentResolver().query(
@@ -344,11 +344,11 @@ public class MainActivity extends Activity {
                 projection,
                 selection,
                 selectionArgs,
-                MediaStore.Downloads.DATE_ADDED + " DESC")) {
+                MediaStore.MediaColumns.DATE_ADDED + " DESC")) {
             if (cursor != null) {
-                int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID);
-                int nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DISPLAY_NAME);
-                int sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.SIZE);
+                int idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID);
+                int nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME);
+                int sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE);
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idColumn);
                     String name = cursor.getString(nameColumn);
