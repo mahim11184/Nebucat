@@ -10,7 +10,7 @@ browser.runtime.onInstalled.addListener(async () => {
   await browser.storage.local.set(saved);
 });
 
-browser.proxy.onProxyError.addListener((error) => {
+browser.proxy.onError.addListener((error) => {
   console.error("Niobium proxy error:", error.message, error);
 });
 
