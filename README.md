@@ -1,47 +1,54 @@
-# Niobium — Firefox / Gecko edition
+# Niobium
 
-Niobium is being rebuilt as a Firefox WebExtension. Firefox uses the **Gecko** browser engine; this project is an add-on that runs inside Firefox, not a replacement browser engine.
+Niobium is a Gecko-powered browser project with an Android APK build and a separate Firefox WebExtension prototype.
 
-## Features in 0.2.0
+## Android app (APK)
 
-- Download manager popup: view recent downloads, filter them, add a URL, pause/resume/cancel active downloads, open completed files, and reveal them in the file manager.
-- Optional Tor SOCKS5 proxy configuration for Firefox, defaulting to `127.0.0.1:9050`.
-- Local settings are stored with Firefox extension storage.
+The Android app is in the `android/` directory and embeds Mozilla **GeckoView**, the Android browser engine used to bring Gecko/Firefox web rendering into an app. It is a real Android application project, not a WebView wrapper.
 
-## Install in Firefox
+Current Android app features:
+- GeckoView browser with URL/search navigation, including support for entering `.onion` addresses.
+- Download handling for files returned by GeckoView, saved under `Downloads/Niobium`.
+- A downloads list for opening saved files.
+- Optional SOCKS5 proxy preferences with remote DNS, intended to connect to a separately running local Tor service such as Orbot.
 
-1. Download this repository as a ZIP and extract it.
-2. Open `about:debugging#/runtime/this-firefox`.
-3. Choose **Load Temporary Add-on…**.
-4. Select the `manifest.json` file in the extracted folder.
+### Build an APK on GitHub (no PC required)
 
-Temporary add-ons are removed when Firefox restarts. For a permanent install, the add-on must be packaged and signed through Mozilla Add-ons.
+Every push to `main` that changes `android/**` or the build workflow starts **Build Niobium Android APK**.
 
-## Tor setup
+1. Open the repository's **Actions** tab.
+2. Open the latest **Build Niobium Android APK** run.
+3. When it finishes successfully, open **Artifacts**.
+4. Download `niobium-android-debug-apk` and extract `app-debug.apk`.
+5. Install the APK on Android. This is a debug build and Android may ask you to allow installs from your file manager/browser.
 
-This add-on **does not include or launch Tor**. Install and run a separate Tor service first, then configure its SOCKS5 endpoint in Niobium. The default is:
+You can also start a build manually from **Actions → Build Niobium Android APK → Run workflow**.
 
-- Host: `127.0.0.1`
-- Port: `9050`
-- SOCKS: `5`
-- Remote DNS through SOCKS: enabled
+### Build locally
 
-Enable **Tor proxy** in the add-on. Use the Tor Project's connection check to verify the browser is actually reaching Tor: https://check.torproject.org/
+Install Android SDK and Java 17, then run:
 
-A green/configured status only means Firefox accepted the proxy settings; it does **not** prove the Tor daemon is running, prove every browser feature is proxied, or guarantee anonymity. Browser extensions cannot turn Firefox into the Tor Browser bundle. For stronger anonymity and anti-fingerprinting protections, use the official Tor Browser: https://www.torproject.org/
+```bash
+cd android
+gradle assembleDebug
+```
 
-Disabling Tor mode clears this add-on's proxy override and returns Firefox to its normal proxy configuration.
+APK output:
 
-## Development
+```
+android/app/build/outputs/apk/debug/app-debug.apk
+```
 
-No build step or paid service is required. The source is plain HTML, CSS, and JavaScript using Firefox's WebExtension APIs.
+### Tor limitations
 
-## Permissions
+Niobium does **not** bundle or start the Tor daemon. To use onion services, a separate Tor service must be running and expose SOCKS5 at `127.0.0.1:9050`. The Tor toggle saves Gecko proxy preferences for the next full app launch; it does not test connectivity. Use the Tor Project connection check to verify routing. This app is not the official Tor Browser and does not promise Tor Browser's anti-fingerprinting or anonymity protections.
 
-- `downloads`: manage Firefox downloads.
-- `storage`: save the Tor SOCKS5 endpoint and toggle state.
-- `proxy`: configure Firefox's proxy settings when the user explicitly enables Tor mode.
+The Android project uses Mozilla GeckoView stable `160.0.20261116130455` from Mozilla's Maven repository. GeckoView is the embeddable Gecko engine; see the [Mozilla quick-start guide](https://firefox-source-docs.mozilla.org/mobile/android/geckoview/consumer/geckoview-quick-start.html).
+
+## Firefox WebExtension prototype
+
+The repository root also keeps the original desktop Firefox WebExtension files (`manifest.json`, `background.js`, `popup.*`). That extension is separate from the Android app and does not itself produce an APK.
 
 ## License
 
-No license has been declared yet. Do not assume the code is licensed for redistribution until a license is added.
+No project-wide license has been declared. GeckoView is distributed under the Mozilla Public License 2.0; that does not automatically license Niobium's own source code.
