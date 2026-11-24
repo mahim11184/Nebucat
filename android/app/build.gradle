@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace "com.mahim11184.niobium"
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         applicationId "com.mahim11184.niobium"
