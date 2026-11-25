@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "android/**"
+      - "iceraven"
+      - ".gitmodules"
       - ".github/workflows/android-apk.yml"
       - "README.md"
   workflow_dispatch:
@@ -14,12 +16,15 @@ permissions:
 
 jobs:
   build:
-    name: Build GeckoView APK
+    name: Build Niobium from Iceraven (Firefox for Android)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
-      - name: Checkout
+      - name: Checkout Niobium and official Iceraven source
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -27,40 +32,49 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
-
-      - name: Install Android platform required by GeckoView
+      - name: Install Iceraven Android SDK requirements
+        working-directory: iceraven
         run: |
-          sdkmanager --channel=3 "platforms;android-37.2" "build-tools;37.0.0"
-          # AGP compileSdk 37 resolves the android-37 directory.
-          # Point it at the 37.2 platform so GeckoView's minCompileSdk 37.2 is met.
-          if [ -d "$ANDROID_HOME/platforms/android-37.2" ]; then
-            rm -rf "$ANDROID_HOME/platforms/android-37"
-            ln -s android-37.2 "$ANDROID_HOME/platforms/android-37"
-          fi
-          ls -la "$ANDROID_HOME/platforms"
+          chmod +x automation/iceraven/install-sdk.sh
+          automation/iceraven/install-sdk.sh
 
-      - name: Install Gradle
+      - name: Apply Iceraven Android Components patches
+        working-directory: iceraven
         run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-9.5.0-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "/opt/gradle-9.5.0/bin" >> "$GITHUB_PATH"
+          chmod +x automation/iceraven/patch_android_components.sh automation/iceraven/setup_venv.sh
+          automation/iceraven/patch_android_components.sh
+          automation/iceraven/setup_venv.sh
 
-      - name: Build debug APK
-        run: gradle --no-daemon -p android clean assembleDebug
-
-      - name: Verify APK
+      - name: Rebrand Iceraven as Niobium
+        working-directory: iceraven
         run: |
-          test -s android/app/build/outputs/apk/debug/app-debug.apk
-          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          # Keep upstream browser code and GeckoView intact; change the visible product identity.
+          find app/src -type f -path '*/res/values*/*strings.xml' -print0 | xargs -0 sed -i 's/Iceraven/Niobium/g; s/iceraven/Niobium/g; s/Firefox/Niobium/g'
+          sed -i 's/applicationId "io.github.forkmaintainers"/applicationId "com.mahim11184.niobium"/' app/build.gradle
+          printf '\nautosignReleaseWithDebugKey=\n' >> local.properties
+          grep -n 'applicationId' app/build.gradle
+          grep -R -n 'app_name' app/src/*/res/values* 2>/dev/null | head -20 || true
 
-      - name: Upload APK
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build Niobium release APKs
+        working-directory: iceraven
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx7g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
+        run: |
+          ./gradlew app:assembleForkRelease -PversionName=0.3.0 --stacktrace --no-daemon
+          find gradle/build/app/outputs/apk -type f -name '*.apk' -ls
+
+      - name: Verify APK output
+        working-directory: iceraven
+        run: |
+          test -n "$(find gradle/build/app/outputs/apk -type f -name '*.apk' -print -quit)"
+
+      - name: Upload installable APKs
         uses: actions/upload-artifact@v4
         with:
-          name: niobium-android-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: niobium-0.3.0-iceraven-apks
+          path: iceraven/gradle/build/app/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
