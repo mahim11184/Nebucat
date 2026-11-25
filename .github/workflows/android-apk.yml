@@ -16,7 +16,7 @@ jobs:
   build:
     name: Build GeckoView APK
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,14 +32,16 @@ jobs:
         with:
           packages: platform-tools
 
-      - name: Install Android platform
+      - name: Install Android platform required by GeckoView
         run: |
-          sdkmanager --channel=3 "platforms;android-37.0" "build-tools;37.0.0"
-          # Android Gradle Plugin expects the API directory android-37.
-          # The preview SDK package currently installs as android-37.0.
-          if [ -d "$ANDROID_HOME/platforms/android-37.0" ] && [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
-            ln -s android-37.0 "$ANDROID_HOME/platforms/android-37"
+          sdkmanager --channel=3 "platforms;android-37.2" "build-tools;37.0.0"
+          # AGP compileSdk 37 resolves the android-37 directory.
+          # Point it at the 37.2 platform so GeckoView's minCompileSdk 37.2 is met.
+          if [ -d "$ANDROID_HOME/platforms/android-37.2" ]; then
+            rm -rf "$ANDROID_HOME/platforms/android-37"
+            ln -s android-37.2 "$ANDROID_HOME/platforms/android-37"
           fi
+          ls -la "$ANDROID_HOME/platforms"
 
       - name: Install Gradle
         run: |
@@ -50,10 +52,15 @@ jobs:
       - name: Build debug APK
         run: gradle --no-daemon -p android clean assembleDebug
 
+      - name: Verify APK
+        run: |
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: niobium-android-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
