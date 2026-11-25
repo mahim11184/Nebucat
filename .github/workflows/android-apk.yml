@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "android/**"
-      - "iceraven"
+      - "mozilla-firefox"
       - ".gitmodules"
       - ".github/workflows/android-apk.yml"
       - "README.md"
@@ -16,11 +15,11 @@ permissions:
 
 jobs:
   build:
-    name: Build Niobium from Iceraven (Firefox for Android)
+    name: Build Niobium from Mozilla Firefox for Android
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
-      - name: Checkout Niobium and official Iceraven source
+      - name: Checkout Niobium and Mozilla source
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -37,50 +36,58 @@ jobs:
         with:
           packages: platform-tools
 
-      - name: Install Iceraven Android SDK requirements
-        working-directory: iceraven
+      - name: Install Mozilla Android SDK requirements
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "ndk;29.0.14206865"
-          echo "sdk.dir=$ANDROID_HOME" >> local.properties
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          echo "sdk.dir=$ANDROID_HOME" >> mozilla-firefox/fenix/local.properties
 
-      - name: Apply Iceraven Android Components patches
-        working-directory: iceraven
+      - name: Rebrand Mozilla Fenix as Niobium
+        working-directory: mozilla-firefox/fenix
         run: |
-          chmod +x automation/iceraven/patch_android_components.sh automation/iceraven/setup_venv.sh
-          automation/iceraven/patch_android_components.sh
-          automation/iceraven/setup_venv.sh
-
-      - name: Rebrand Iceraven as Niobium
-        working-directory: iceraven
-        run: |
-          # Keep upstream browser code and GeckoView intact; change the visible product identity.
-          find app/src -type f -path '*/res/values*/*strings.xml' -print0 | xargs -0 sed -i 's/Iceraven/Niobium/g; s/iceraven/Niobium/g; s/Firefox/Niobium/g'
-          sed -i 's/applicationId "io.github.forkmaintainers"/applicationId "com.mahim11184.niobium"/' app/build.gradle
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("app/build.gradle")
+          s = p.read_text()
+          s, n = re.subn(r'applicationId\s+"org\.mozilla"', 'applicationId "com.mahim11184.niobium"', s, count=1)
+          if n != 1:
+              raise SystemExit("Could not safely locate Mozilla Fenix applicationId")
+          s = s.replace('applicationIdSuffix ".fenix.debug"', 'applicationIdSuffix ".debug"', 1)
+          p.write_text(s)
+          found = False
+          for f in Path("app/src").rglob("strings.xml"):
+              t = f.read_text(errors="ignore")
+              new, count = re.subn(r'(<string\s+name="app_name"[^>]*>)Firefox(</string>)', r'\1Niobium\2', t, count=1)
+              if count:
+                  f.write_text(new)
+                  found = True
+          if not found:
+              print("Warning: app_name was not an exact Firefox string; package will still be Niobium")
+          PY
           printf '\nautosignReleaseWithDebugKey=\n' >> local.properties
-          grep -n 'applicationId' app/build.gradle
-          grep -R -n 'app_name' app/src/*/res/values* 2>/dev/null | head -20 || true
+          grep -n 'applicationId' app/build.gradle | head
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build Niobium release APKs
-        working-directory: iceraven
+      - name: Build Niobium debug APKs
+        working-directory: mozilla-firefox/fenix
         env:
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx7g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx5g -Xms1g -XX:MaxMetaspaceSize=3g"
         run: |
-          ./gradlew app:assembleForkRelease -PversionName=0.3.0 --stacktrace --no-daemon
-          find gradle/build/app/outputs/apk -type f -name '*.apk' -ls
+          ./gradlew clean app:assembleDebug --stacktrace --no-daemon
+          find app/build/outputs/apk -type f -name '*.apk' -ls
 
       - name: Verify APK output
-        working-directory: iceraven
+        working-directory: mozilla-firefox/fenix
         run: |
-          test -n "$(find gradle/build/app/outputs/apk -type f -name '*.apk' -print -quit)"
+          test -n "$(find app/build/outputs/apk -type f -name '*.apk' -print -quit)"
 
-      - name: Upload installable APKs
+      - name: Upload Niobium APKs
         uses: actions/upload-artifact@v4
         with:
-          name: niobium-0.3.0-iceraven-apks
-          path: iceraven/gradle/build/app/outputs/apk/**/*.apk
+          name: niobium-mozilla-firefox-android-apks
+          path: mozilla-firefox/fenix/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
