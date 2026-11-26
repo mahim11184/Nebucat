@@ -20,6 +20,7 @@ jobs:
       - name: Checkout Niobium
         uses: actions/checkout@v4
         with:
+          submodules: false
           fetch-depth: 1
 
       - name: Set up Java
@@ -31,6 +32,8 @@ jobs:
       - name: Clone official Mozilla Firefox source
         run: |
           git clone --depth 1 https://github.com/mozilla-firefox/firefox.git mozilla-firefox
+          git -C mozilla-firefox fetch --depth 1 origin 4de791e9c62b308a5ab1e4464dc1fd19d8c4d13b
+          git -C mozilla-firefox checkout --detach FETCH_HEAD
           test -x mozilla-firefox/mach
           test -d mozilla-firefox/mobile/android/fenix/app
 
@@ -66,7 +69,10 @@ jobs:
               raise SystemExit("Could not safely locate the Fenix debug applicationIdSuffix")
           gradle.write_text(source)
 
-          resources = Path("mobile/android/fenix/app/src/main/res")
+          # Include main, release, nightly and debug source sets. The debug
+          # build uses the debug channel, which exposes Mozilla's custom AMO
+          # collection controls after the in-app debug menu is enabled.
+          resources = Path("mobile/android/fenix/app/src")
           renamed = 0
           for xml in resources.rglob("*.xml"):
               try:
