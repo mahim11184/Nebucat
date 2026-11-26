@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
     paths:
-      - "mozilla-firefox"
-      - ".gitmodules"
       - ".github/workflows/android-apk.yml"
       - "README.md"
   workflow_dispatch:
@@ -15,94 +13,99 @@ permissions:
 
 jobs:
   build:
-    name: Build Niobium from Mozilla Firefox for Android
+    name: Build Niobium from Mozilla Central (GeckoView)
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     steps:
-      - name: Checkout Niobium and Mozilla source
+      - name: Checkout Niobium
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 1
 
-      - name: Set up Java 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
-
-      - name: Install Mozilla Android SDK requirements
+      - name: Clone official Mozilla Firefox source
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
-          echo "sdk.dir=$ANDROID_HOME" >> mozilla-firefox/fenix/local.properties
+          git clone --depth 1 https://github.com/mozilla-firefox/firefox.git mozilla-firefox
+          test -x mozilla-firefox/mach
+          test -d mozilla-firefox/mobile/android/fenix/app
 
-      - name: Rebrand Mozilla Fenix as Niobium
-        working-directory: mozilla-firefox/fenix
+      - name: Bootstrap Mozilla Central for Android (artifact mode)
+        working-directory: mozilla-firefox
+        run: |
+          ./mach --no-interactive bootstrap --application-choice="GeckoView/Firefox for Android Artifact Mode"
+
+      - name: Rebrand Fenix as Niobium
+        working-directory: mozilla-firefox
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
-          p = Path("app/build.gradle")
-          s = p.read_text()
-          s, n = re.subn(r'applicationId\s+"org\.mozilla"', 'applicationId "com.mahim11184.niobium"', s, count=1)
-          if n != 1:
-              raise SystemExit("Could not safely locate Mozilla Fenix applicationId")
-          s = s.replace('applicationIdSuffix ".fenix.debug"', 'applicationIdSuffix ".debug"', 1)
-          p.write_text(s)
-          found = False
-          for f in Path("app/src").rglob("strings.xml"):
-              t = f.read_text(errors="ignore")
-              new, count = re.subn(r'(<string\s+name="app_name"[^>]*>)Firefox(</string>)', r'\1Niobium\2', t, count=1)
-              if count:
-                  f.write_text(new)
-                  found = True
-          if not found:
-              print("Warning: app_name was not an exact Firefox string; package will still be Niobium")
+
+          gradle = Path("mobile/android/fenix/app/build.gradle")
+          source = gradle.read_text()
+          source, count = re.subn(
+              r'applicationId\s+"org\.mozilla"',
+              'applicationId "com.mahim11184.niobium"',
+              source,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit("Could not safely locate the upstream Fenix applicationId")
+          source, count = re.subn(
+              r'applicationIdSuffix\s+"\.fenix\.debug"',
+              'applicationIdSuffix ".debug"',
+              source,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit("Could not safely locate the Fenix debug applicationIdSuffix")
+          gradle.write_text(source)
+
+          resources = Path("mobile/android/fenix/app/src/main/res")
+          renamed = 0
+          for xml in resources.rglob("*.xml"):
+              try:
+                  content = xml.read_text()
+              except (UnicodeDecodeError, OSError):
+                  continue
+              updated, hits = re.subn(
+                  r'(<string\s+name="app_name"[^>]*>)\s*[^<]+\s*(</string>)',
+                  r'\1Niobium\2',
+                  content,
+              )
+              if hits:
+                  xml.write_text(updated)
+                  renamed += hits
+          if not renamed:
+              raise SystemExit("Could not find the upstream app_name resource")
+          print(f"Updated {renamed} app-name resource(s)")
           PY
-          printf '\nautosignReleaseWithDebugKey=\n' >> local.properties
-          grep -n 'applicationId' app/build.gradle | head
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Build Niobium debug APKs
-        working-directory: mozilla-firefox/fenix
+      - name: Build GeckoView and Android frontend
+        working-directory: mozilla-firefox
         env:
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx5g -Xms1g -XX:MaxMetaspaceSize=3g"
+          MOZBUILD_STATE_PATH: ${{ runner.temp }}/mozbuild
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx5g -Xms1g -XX:MaxMetaspaceSize=2g"
         run: |
-          # The archived Mozilla Fenix revision downloads its pinned nimbus-fml
-          # binary from Mozilla Taskcluster. That endpoint can intermittently fail;
-          # retry the build instead of failing the entire APK workflow immediately.
-          for attempt in 1 2 3; do
-            echo "Mozilla Fenix build attempt $attempt/3"
-            if ./gradlew app:assembleDebug --stacktrace --no-daemon; then
-              find app/build/outputs/apk -type f -name '*.apk' -ls
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "Build failed; clearing the partially downloaded Nimbus tool and retrying in 20 seconds."
-              rm -rf build/bin/nimbus/125.20240317050356
-              sleep 20
-            fi
-          done
-          echo "Mozilla Fenix build failed after 3 attempts."
-          exit 1
+          ./mach build
+          ./mach gradle --no-daemon fenix:assembleDebug
 
-      - name: Verify APK output
-        working-directory: mozilla-firefox/fenix
+      - name: Collect and verify APKs
         run: |
-          test -n "$(find app/build/outputs/apk -type f -name '*.apk' -print -quit)"
+          mkdir -p "${RUNNER_TEMP}/niobium-apks"
+          find mozilla-firefox -type f -path '*/fenix/app/outputs/apk/*' -name '*.apk' -print -exec cp {} "${RUNNER_TEMP}/niobium-apks/" \;
+          test -n "$(find "${RUNNER_TEMP}/niobium-apks" -type f -name '*.apk' -print -quit)"
+          ls -lh "${RUNNER_TEMP}/niobium-apks"
 
       - name: Upload Niobium APKs
         uses: actions/upload-artifact@v4
         with:
-          name: niobium-mozilla-firefox-android-apks
-          path: mozilla-firefox/fenix/app/build/outputs/apk/**/*.apk
+          name: niobium-mozilla-central-android-apks
+          path: ${{ runner.temp }}/niobium-apks/*.apk
           if-no-files-found: error
           retention-days: 30

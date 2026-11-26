@@ -1,3 +1,0 @@
-[submodule "mozilla-firefox"]
-	path = mozilla-firefox
-	url = https://github.com/mozilla-mobile/firefox-android.git

@@ -1,29 +1,43 @@
 # Niobium
 
-Niobium is an Android browser project built from Mozilla's open-source Firefox for Android (Fenix) code, with Niobium branding and package identity.
+Niobium is an Android browser built from Mozilla's official Firefox source tree, using the Gecko engine through GeckoView. It is not an Android WebView browser.
 
-## Android APK
+## Android source
 
-The Android browser source is checked out from Mozilla's own repository:
+- Upstream: https://github.com/mozilla-firefox/firefox
+- Source location: Mozilla Central (Firefox for Android / Fenix, Android Components, and GeckoView)
+- Engine: GeckoView
+- App ID: `com.mahim11184.niobium.debug` for the debug APK
 
-- Source: https://github.com/mozilla-mobile/firefox-android
-- Source revision: Mozilla Firefox for Android repository commit `fe8a71cd70ad5674abe1824fe11dc78372b736c2`
-- Build project: `fenix/`
-- Engine: Mozilla GeckoView
+The old `mozilla-mobile/firefox-android` repository was archived by Mozilla. The Android browser source is now maintained in Mozilla Central, so the APK workflow clones the official `mozilla-firefox/firefox` repository directly and uses Mozilla's `mach` bootstrap/build commands.
 
-**Important:** Mozilla archived the `mozilla-mobile/firefox-android` GitHub repository in June 2024 after migrating ongoing Firefox for Android development to Mozilla Central. This build therefore uses Mozilla's genuine upstream Fenix source at that archived revision, not IceRaven. It is not a build of the latest Firefox release.
+## Android APK (no PC required)
 
-### Build an APK on GitHub (no PC required)
-
-Pushes to the build workflow or Mozilla source submodule trigger the GitHub Actions build.
+A push to the build workflow or a manual workflow dispatch starts GitHub Actions.
 
 1. Open the repository's **Actions** tab.
-2. Open the latest **Build Niobium Android APK** run.
+2. Open **Build Niobium Android APK**.
 3. Wait for the build and APK verification to finish.
-4. Download `niobium-mozilla-firefox-android-apks` under **Artifacts**.
+4. Download `niobium-mozilla-central-android-apks` under **Artifacts**.
 5. Extract the ZIP and install the APK on Android.
 
-The APK is a debug build signed with GitHub Actions' temporary debug key. It cannot update an install signed with a different key.
+The build uses Mozilla's Android artifact mode to download prebuilt Gecko native components rather than compiling all Gecko C++ code from scratch. The first build may take a long time and can fail if GitHub's runner runs out of disk, memory, or time. An APK is available only when the workflow completes successfully.
+
+The debug APK is signed with GitHub Actions' temporary debug key. It cannot update an install signed with a different key.
+
+## Add-ons / extensions
+
+Niobium uses Firefox for Android's GeckoView WebExtensions implementation, not Chromium's extension system.
+
+The upstream Android frontend includes Mozilla's AMO (addons.mozilla.org) add-on manager and the **Custom Add-on Collection** setting. In the debug build, enable it as follows:
+
+1. Open **Settings → About Niobium**.
+2. Tap the Niobium logo five times to enable the debug menu.
+3. Return to **Settings** and open **Advanced → Custom Add-on Collection**.
+4. Enter the numeric owner ID and collection name (slug) from an AMO collection.
+5. Reopen Niobium, then open **Add-ons** to install extensions from that collection.
+
+This allows installing many more AMO-listed Android-compatible extensions than a fixed recommended list. It does **not** guarantee every desktop Firefox extension will work: extensions that require unsupported APIs, desktop-only UI, or incompatible permissions may still fail on Android.
 
 ## Firefox WebExtension prototype
 
@@ -31,4 +45,4 @@ The repository root also contains the original desktop Firefox WebExtension prot
 
 ## License
 
-Niobium's own licensing should be considered separately from Mozilla's upstream code. Mozilla Firefox for Android is distributed under the Mozilla Public License 2.0.
+Mozilla Firefox for Android source is distributed under the Mozilla Public License 2.0. Niobium's own code and branding should be considered separately.
