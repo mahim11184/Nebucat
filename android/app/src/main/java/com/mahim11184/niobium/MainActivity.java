@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         header.setBackgroundColor(Color.rgb(15, 25, 37));
 
         TextView brand = new TextView(this);
-        brand.setText("Niobium");
+        brand.setText("Nebucat");
         brand.setTextColor(Color.WHITE);
         brand.setTextSize(20);
         brand.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -264,7 +264,7 @@ public class MainActivity extends Activity {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Niobium");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Nebucat");
                 values.put(MediaStore.MediaColumns.IS_PENDING, 1);
 
                 savedUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
@@ -282,7 +282,7 @@ public class MainActivity extends Activity {
                 ContentValues complete = new ContentValues();
                 complete.put(MediaStore.MediaColumns.IS_PENDING, 0);
                 getContentResolver().update(savedUri, complete, null, null);
-                runOnUiThread(() -> Toast.makeText(this, "Saved to Downloads/Niobium", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(this, "Saved to Downloads/Nebucat", Toast.LENGTH_LONG).show());
             } catch (Exception error) {
                 try { input.close(); } catch (Exception ignored) {}
                 if (savedUri != null) getContentResolver().delete(savedUri, null, null);
@@ -366,7 +366,7 @@ public class MainActivity extends Activity {
         if (labels.isEmpty()) {
             new AlertDialog.Builder(this)
                     .setTitle("Niobium downloads")
-                    .setMessage("No downloaded files yet. Files are saved in Downloads/Niobium.")
+                    .setMessage("No downloaded files yet. Files are saved in Downloads/Nebucat.")
                     .setPositiveButton("OK", null)
                     .show();
             return;
@@ -415,7 +415,7 @@ public class MainActivity extends Activity {
         if (engineStatus != null) {
             engineStatus.setText(enabled
                     ? "Tor settings saved • restart required • local Tor service needed"
-                    : "Browsing with GeckoView • Downloads save to Downloads/Niobium");
+                    : "Browsing with GeckoView • Downloads save to Downloads/Nebucat");
         }
     }
 
