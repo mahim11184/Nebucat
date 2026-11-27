@@ -5,7 +5,7 @@
 
     <application
         android:allowBackup="false"
-        android:label="Niobium"
+        android:label="Nebucat"
         android:icon="@drawable/ic_niobium"
         android:roundIcon="@drawable/ic_niobium"
         android:supportsRtl="true"
