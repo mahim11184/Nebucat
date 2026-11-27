@@ -1,6 +1,6 @@
 # Nebucat
 
-Niobium is an Android browser built from Mozilla's official Firefox source tree, using the Gecko engine through GeckoView. It is not an Android WebView browser.
+Nebucat is an Android browser built from Mozilla's official Firefox source tree, using the Gecko engine through GeckoView. It is not an Android WebView browser.
 
 ## Android source
 
@@ -16,7 +16,7 @@ The old `mozilla-mobile/firefox-android` repository was archived by Mozilla. The
 A push to the relevant source files or a manual workflow dispatch starts the matching GitHub Actions workflow.
 
 1. Open the repository's **Actions** tab.
-2. For the official Mozilla Fenix build, open **Build Niobium Android APK** and download `niobium-mozilla-central-android-apks`.
+2. For the official Mozilla Fenix build, open **Build Nebucat Android APK** and download `nebucat-mozilla-central-android-apks`.
 3. For the standalone Nebucat GeckoView app in `android/app/`, open **Build Nebucat GeckoView APK** and download `nebucat-geckoview-android-apk`.
 4. Wait for the workflow to finish successfully, then download the artifact ZIP and install the APK on Android.
 
@@ -26,15 +26,15 @@ The debug APKs are signed with GitHub Actions' temporary debug key. They cannot 
 
 ## Add-ons / extensions
 
-Niobium uses Firefox for Android's GeckoView WebExtensions implementation, not Chromium's extension system.
+Nebucat uses Firefox for Android's GeckoView WebExtensions implementation, not Chromium's extension system.
 
 The upstream Android frontend includes Mozilla's AMO (addons.mozilla.org) add-on manager and the **Custom Add-on Collection** setting. In the debug build, enable it as follows:
 
-1. Open **Settings → About Niobium**.
-2. Tap the Niobium logo five times to enable the debug menu.
+1. Open **Settings → About Nebucat**.
+2. Tap the Nebucat logo five times to enable the debug menu.
 3. Return to **Settings** and open **Advanced → Custom Add-on Collection**.
 4. Enter the numeric owner ID and collection name (slug) from an AMO collection.
-5. Reopen Niobium, then open **Add-ons** to install extensions from that collection.
+5. Reopen Nebucat, then open **Add-ons** to install extensions from that collection.
 
 This allows installing many more AMO-listed Android-compatible extensions than a fixed recommended list. It does **not** guarantee every desktop Firefox extension will work: extensions that require unsupported APIs, desktop-only UI, or incompatible permissions may still fail on Android.
 
@@ -48,4 +48,4 @@ The repository root also contains the original desktop Firefox WebExtension prot
 
 ## License
 
-Mozilla Firefox for Android source is distributed under the Mozilla Public License 2.0. Niobium's own code and branding should be considered separately.
+Mozilla Firefox for Android source is distributed under the Mozilla Public License 2.0. Nebucat's own code and branding should be considered separately.
