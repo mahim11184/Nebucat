@@ -13,17 +13,16 @@ The old `mozilla-mobile/firefox-android` repository was archived by Mozilla. The
 
 ## Android APK (no PC required)
 
-A push to the build workflow or a manual workflow dispatch starts GitHub Actions.
+A push to the relevant source files or a manual workflow dispatch starts the matching GitHub Actions workflow.
 
 1. Open the repository's **Actions** tab.
-2. Open **Build Niobium Android APK**.
-3. Wait for the build and APK verification to finish.
-4. Download `niobium-mozilla-central-android-apks` under **Artifacts**.
-5. Extract the ZIP and install the APK on Android.
+2. For the official Mozilla Fenix build, open **Build Niobium Android APK** and download `niobium-mozilla-central-android-apks`.
+3. For the standalone Nebucat GeckoView app in `android/app/`, open **Build Nebucat GeckoView APK** and download `nebucat-geckoview-android-apk`.
+4. Wait for the workflow to finish successfully, then download the artifact ZIP and install the APK on Android.
 
 The build uses Mozilla's Android artifact mode to download prebuilt Gecko native components rather than compiling all Gecko C++ code from scratch. The first build may take a long time and can fail if GitHub's runner runs out of disk, memory, or time. An APK is available only when the workflow completes successfully.
 
-The debug APK is signed with GitHub Actions' temporary debug key. It cannot update an install signed with a different key.
+The debug APKs are signed with GitHub Actions' temporary debug key. They cannot update an install signed with a different key. The Fenix build and standalone GeckoView build are separate apps/build pipelines and are not interchangeable.
 
 ## Add-ons / extensions
 
@@ -38,6 +37,10 @@ The upstream Android frontend includes Mozilla's AMO (addons.mozilla.org) add-on
 5. Reopen Niobium, then open **Add-ons** to install extensions from that collection.
 
 This allows installing many more AMO-listed Android-compatible extensions than a fixed recommended list. It does **not** guarantee every desktop Firefox extension will work: extensions that require unsupported APIs, desktop-only UI, or incompatible permissions may still fail on Android.
+
+## Standalone GeckoView app
+
+The `android/` project is a separate, lightweight browser app that uses Mozilla's published GeckoView Android library. Its dedicated workflow builds this exact app and verifies the APK signature. This standalone app is not the Fenix frontend and does not automatically include Fenix's built-in AMO add-on manager or custom collection UI. Use the official Mozilla Fenix workflow when you need that frontend and its add-on management features.
 
 ## Firefox WebExtension prototype
 
