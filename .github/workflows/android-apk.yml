@@ -1,4 +1,4 @@
-name: Build Niobium Android APK
+name: Build Nebucat Android APK
 
 on:
   push:
@@ -13,11 +13,11 @@ permissions:
 
 jobs:
   build:
-    name: Build Niobium from Mozilla Central (GeckoView)
+    name: Build Nebucat from official Mozilla Firefox source (GeckoView)
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - name: Checkout Niobium
+      - name: Checkout Nebucat
         uses: actions/checkout@v4
         with:
           submodules: false
@@ -42,7 +42,7 @@ jobs:
         run: |
           ./mach --no-interactive bootstrap --application-choice="GeckoView/Firefox for Android Artifact Mode"
 
-      - name: Rebrand Fenix as Niobium
+      - name: Rebrand Fenix as Nebucat
         working-directory: mozilla-firefox
         run: |
           python3 - <<'PY'
@@ -81,14 +81,14 @@ jobs:
                   continue
               updated, hits = re.subn(
                   r'(<string\s+name="app_name"[^>]*>)\s*[^<]+\s*(</string>)',
-                  r'\1Niobium\2',
+                  r'\1Nebucat\2',
                   content,
               )
               if hits:
                   xml.write_text(updated)
                   renamed += hits
           if not renamed:
-              raise SystemExit("Could not find the upstream app_name resource")
+              raise SystemExit("Could not find the upstream app_name resource for Nebucat")
           print(f"Updated {renamed} app-name resource(s)")
           PY
 
@@ -103,15 +103,15 @@ jobs:
 
       - name: Collect and verify APKs
         run: |
-          mkdir -p "${RUNNER_TEMP}/niobium-apks"
+          mkdir -p "${RUNNER_TEMP}/nebucat-apks"
           find mozilla-firefox -type f -path '*/fenix/app/outputs/apk/*' -name '*.apk' -print -exec cp {} "${RUNNER_TEMP}/niobium-apks/" \;
           test -n "$(find "${RUNNER_TEMP}/niobium-apks" -type f -name '*.apk' -print -quit)"
           ls -lh "${RUNNER_TEMP}/niobium-apks"
 
-      - name: Upload Niobium APKs
+      - name: Upload Nebucat APKs
         uses: actions/upload-artifact@v4
         with:
-          name: niobium-mozilla-central-android-apks
+          name: nebucat-mozilla-central-android-apks
           path: ${{ runner.temp }}/niobium-apks/*.apk
           if-no-files-found: error
           retention-days: 30
