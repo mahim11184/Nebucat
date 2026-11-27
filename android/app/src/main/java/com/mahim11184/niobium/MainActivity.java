@@ -41,7 +41,7 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static final String HOME_URL = "https://duckduckgo.com/";
-    private static final String PREFS = "niobium_settings";
+    private static final String PREFS = "nebucat_settings";
     private static GeckoRuntime runtime;
 
     private GeckoView geckoView;
@@ -319,12 +319,12 @@ public class MainActivity extends Activity {
             }
         }
         String path = Uri.parse(sourceUrl).getLastPathSegment();
-        return (path == null || path.trim().isEmpty()) ? "niobium-download" : path;
+        return (path == null || path.trim().isEmpty()) ? "nebucat-download" : path;
     }
 
     private String safeFileName(String name) {
-        String safe = name == null ? "niobium-download" : name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
-        if (safe.isEmpty() || safe.equals(".") || safe.equals("..")) return "niobium-download";
+        String safe = name == null ? "nebucat-download" : name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        if (safe.isEmpty() || safe.equals(".") || safe.equals("..")) return "nebucat-download";
         return safe;
     }
 
@@ -337,7 +337,7 @@ public class MainActivity extends Activity {
                 MediaStore.MediaColumns.SIZE
         };
         String selection = MediaStore.MediaColumns.RELATIVE_PATH + "=?";
-        String[] selectionArgs = {Environment.DIRECTORY_DOWNLOADS + "/Niobium/"};
+        String[] selectionArgs = {Environment.DIRECTORY_DOWNLOADS + "/Nebucat/"};
 
         try (Cursor cursor = getContentResolver().query(
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI,
@@ -365,7 +365,7 @@ public class MainActivity extends Activity {
 
         if (labels.isEmpty()) {
             new AlertDialog.Builder(this)
-                    .setTitle("Niobium downloads")
+                    .setTitle("Nebucat downloads")
                     .setMessage("No downloaded files yet. Files are saved in Downloads/Nebucat.")
                     .setPositiveButton("OK", null)
                     .show();
@@ -375,7 +375,7 @@ public class MainActivity extends Activity {
         String[] items = labels.toArray(new String[0]);
         Uri[] itemUris = uris.toArray(new Uri[0]);
         new AlertDialog.Builder(this)
-                .setTitle("Niobium downloads")
+                .setTitle("Nebucat downloads")
                 .setItems(items, (dialog, which) -> {
                     Intent open = new Intent(Intent.ACTION_VIEW);
                     open.setDataAndType(itemUris[which], "*/*");
@@ -403,7 +403,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle(enabled ? "Tor proxy prepared" : "Tor proxy disabled")
                 .setMessage(enabled
-                        ? "Niobium will use SOCKS5 at 127.0.0.1:9050 after the next full app restart. Start a separate Tor service such as Orbot first. This setting does not verify a Tor connection or guarantee anonymity."
+                        ? "Nebucat will use SOCKS5 at 127.0.0.1:9050 after the next full app restart. Start a separate Tor service such as Orbot first. This setting does not verify a Tor connection or guarantee anonymity."
                         : "The Tor proxy preference is disabled for the next full app launch.")
                 .setPositiveButton("OK", null)
                 .show();
