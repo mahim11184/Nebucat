@@ -1,0 +1,62 @@
+name: Build Nebucat GeckoView APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/nebucat-android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Nebucat Android app
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Nebucat
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 37
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+
+      - name: Build Nebucat debug APK
+        working-directory: android
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Verify APK exists and is signed
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose "$APK"
+          mkdir -p "${RUNNER_TEMP}/nebucat-apk"
+          cp "$APK" "${RUNNER_TEMP}/nebucat-apk/Nebucat-debug.apk"
+          ls -lh "${RUNNER_TEMP}/nebucat-apk"
+
+      - name: Upload Nebucat APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nebucat-geckoview-android-apk
+          path: ${{ runner.temp }}/nebucat-apk/Nebucat-debug.apk
+          if-no-files-found: error
+          retention-days: 30
