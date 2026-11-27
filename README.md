@@ -1,4 +1,4 @@
-# Niobium
+# Nebucat
 
 Niobium is an Android browser built from Mozilla's official Firefox source tree, using the Gecko engine through GeckoView. It is not an Android WebView browser.
 
