@@ -104,14 +104,15 @@ jobs:
       - name: Collect and verify APKs
         run: |
           mkdir -p "${RUNNER_TEMP}/nebucat-apks"
-          find mozilla-firefox -type f -path '*/fenix/app/outputs/apk/*' -name '*.apk' -print -exec cp {} "${RUNNER_TEMP}/niobium-apks/" \;
-          test -n "$(find "${RUNNER_TEMP}/niobium-apks" -type f -name '*.apk' -print -quit)"
-          ls -lh "${RUNNER_TEMP}/niobium-apks"
+          find mozilla-firefox -type f -path '*/fenix/app/outputs/apk/*' -name '*.apk' -print -exec cp {} "${RUNNER_TEMP}/nebucat-apks/" \;
+          test -n "$(find "${RUNNER_TEMP}/nebucat-apks" -type f -name '*.apk' -print -quit)"
+          ls -lh "${RUNNER_TEMP}/nebucat-apks"
+          (cd "${RUNNER_TEMP}/nebucat-apks" && sha256sum *.apk > SHA256SUMS)
 
       - name: Upload Nebucat APKs
         uses: actions/upload-artifact@v4
         with:
           name: nebucat-mozilla-central-android-apks
-          path: ${{ runner.temp }}/niobium-apks/*.apk
+          path: ${{ runner.temp }}/nebucat-apks/*.apk
           if-no-files-found: error
           retention-days: 30
